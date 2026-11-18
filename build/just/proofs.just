@@ -71,11 +71,15 @@ proof-check-agda:
         echo "FAIL: agda not installed; the Agda proofs were not checked"
         exit 1
     fi
-    mapfile -t PROOFS < <(find verification/proofs/agda -name '*.agda' | sort)
-    if [ "${#PROOFS[@]}" -eq 0 ]; then
+    if ! FOUND="$(find verification/proofs/agda -name '*.agda' | sort)"; then
+        echo "FAIL: could not list the Agda proofs under verification/proofs/agda"
+        exit 1
+    fi
+    if [ -z "$FOUND" ]; then
         echo "FAIL: no Agda proofs found under verification/proofs/agda"
         exit 1
     fi
+    mapfile -t PROOFS <<< "$FOUND"
     ERRORS=0
     for f in "${PROOFS[@]}"; do
         echo -n "  Checking $f ... "
