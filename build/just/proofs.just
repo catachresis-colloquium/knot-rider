@@ -68,13 +68,18 @@ proof-check-agda:
     set -euo pipefail
     echo "=== Checking Agda proofs ==="
     if ! command -v agda &>/dev/null; then
-        echo "SKIP: agda not installed"
-        exit 0
+        echo "FAIL: agda not installed; the Agda proofs were not checked"
+        exit 1
+    fi
+    mapfile -t PROOFS < <(find verification/proofs/agda -name '*.agda' | sort)
+    if [ "${#PROOFS[@]}" -eq 0 ]; then
+        echo "FAIL: no Agda proofs found under verification/proofs/agda"
+        exit 1
     fi
     ERRORS=0
-    for f in $(find verification/proofs/agda -name '*.agda' 2>/dev/null); do
+    for f in "${PROOFS[@]}"; do
         echo -n "  Checking $f ... "
-        if agda --safe --without-K --cubical-compatible "$f" 2>/dev/null; then
+        if (cd "$(dirname "$f")" && agda --safe --without-K --cubical-compatible "$(basename "$f")") 2>/dev/null; then
             echo "OK"
         else
             echo "FAIL"
